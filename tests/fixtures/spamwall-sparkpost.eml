@@ -1,0 +1,30 @@
+Return-Path: <msprvs1=20759SRLLI8Ho=bounces-274689-4@bounce.eventbrite.com>
+Delivered-To: someone@example.org
+Received: from mail.hosting.example.net
+	by mail.hosting.example.net with LMTP
+	id 4AbCdEfGhIjK
+	(envelope-from <msprvs1=20759SRLLI8Ho=bounces-274689-4@bounce.eventbrite.com>)
+	for <someone@example.org>; Mon, 26 Oct 2026 11:31:47 -0400
+Received: from spamwall.example.org ([203.0.113.191]:31478)
+	by mail.hosting.example.net with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.100.1)
+	(envelope-from <msprvs1=20759SRLLI8Ho=bounces-274689-4@bounce.eventbrite.com>)
+	id 1xAbCd-0000001-2XyZ
+	for someone@example.org; Mon, 26 Oct 2026 11:31:46 -0400
+Received: from localhost (spamwall.example.org [203.0.113.191])
+	by spamwall.example.org (SpamWall) with ESMTP id C9A5B537D1F7
+	for <someone@example.org>; Mon, 26 Oct 2026 11:31:45 -0400 (EDT)
+Received: from spamwall.example.org ([203.0.113.191])
+	by localhost (spamwall.example.org [203.0.113.191]) (spamwall, port 10024)
+	with ESMTP id 83+01GgtbNPX for <someone@example.org>;
+	Mon, 26 Oct 2026 11:31:44 -0400 (EDT)
+Received: from mta-70-3-103.eventbrite.com.sparkpostmail.com (mta-70-3-103.eventbrite.com.sparkpostmail.com [156.70.3.103])
+	by spamwall.example.org (SpamWall) with ESMTPS id A8C93537D1F5
+	for <someone@example.org>; Mon, 26 Oct 2026 11:31:43 -0400 (EDT)
+Received: from [10.90.8.225] ([10.90.8.225])
+	by i-02644287eb44601db.mta1vrest.sd.prd.sparkpost (ecelerity 5.3.0.76552 r(msys-ecelerity:tags/5.3.0.30)) with REST
+	id 41/2A-12345-ABCDEF01; Mon, 26 Oct 2026 15:31:42 +0000
+From: Eventbrite <noreply@reminder.eventbrite.com>
+To: someone@example.org
+Subject: You're invited
+Message-ID: <41.2A.12345.ABCDEF01@i-02644287eb44601db.mta1vrest.sd.prd.sparkpost>

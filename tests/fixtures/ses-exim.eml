@@ -1,0 +1,66 @@
+Return-Path: <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@rsend.keymimestate.com>
+Delivered-To: recipient@example.org
+Received: from mail.hosting.example.net
+	by mail.hosting.example.net with LMTP
+	id kAbCdEfGhGnzDWoAk2XzLQ
+	(envelope-from <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@rsend.keymimestate.com>)
+	for <recipient@example.org>; Fri, 23 Oct 2026 21:31:13 -0400
+Received: from spamwall.example.org ([203.0.113.191]:17784)
+	by mail.hosting.example.net with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.100.1)
+	(envelope-from <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@rsend.keymimestate.com>)
+	id 1xKQbK-00000001LyQ-2KXG
+	for recipient@example.org;
+	Fri, 23 Oct 2026 21:31:12 -0400
+Received: from a11-162.smtp-out.amazonses.com (a11-162.smtp-out.amazonses.com [54.240.11.162])
+	by spamwall.example.org (Postfix) with ESMTPS id 4cTQ1m0Xyz3kZ
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	for <recipient@example.org>; Fri, 23 Oct 2026 21:31:10 -0400 (EDT)
+Authentication-Results: spamwall.example.org;
+	dkim=pass (2048-bit key; unprotected) header.d=keymimestate.com header.i=@keymimestate.com header.b="KdQ2Lr7a";
+	dkim=pass (1024-bit key) header.d=amazonses.com header.i=@amazonses.com header.b="Xk1n9Pq0";
+	spf=pass (spamwall.example.org: domain of rsend.keymimestate.com designates 54.240.11.162 as permitted sender) smtp.mailfrom=rsend.keymimestate.com;
+	dmarc=pass (p=quarantine dis=none) header.from=keymimestate.com
+X-Spam-Status: No, score=-1.9 required=5.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HTML_MESSAGE,RCVD_IN_DNSWL_NONE,SPF_HELO_PASS,
+	SPF_PASS autolearn=ham autolearn_force=no version=4.0.1
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=hsbnp7p3ensaochzwyq5wwmceodymuwv; d=keymimestate.com; t=1792805469;
+	h=From:To:Subject:MIME-Version:Content-Type:Message-ID:Date;
+	bh=frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;
+	b=KdQ2Lr7aFakeSignatureValueForTestingOnlyAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=224i4yxa5dv7c2xz3womw6peuasteono; d=amazonses.com; t=1792805469;
+	h=From:To:Subject:MIME-Version:Content-Type:Message-ID:Date:Feedback-ID;
+	bh=frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;
+	b=Xk1n9Pq0FakeSignatureValueForTestingOnlyBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=
+From: "Keymime State" <hello@keymimestate.com>
+To: recipient@example.org
+Subject: =?UTF-8?Q?Your_October_statement_is_ready_=E2=80=94_Keymime?=
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_Part_1234_5678.1792805469000"
+Message-ID: <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@email.amazonses.com>
+Date: Sat, 24 Oct 2026 01:30:29 +0000
+List-Unsubscribe: <mailto:unsubscribe@keymimestate.com?subject=unsubscribe>, <https://keymimestate.com/unsubscribe?u=abc123>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Feedback-ID: :1.us-east-1.p3mVQ1XdE+sYmJb/HXJlAtsXt4Y5Lxow9xaTkCD2ZKXV0nNwcXEKTZAXfrHd4tYPaLlAQnLoceaX0U9vhmzeoM+BKXX4BFAodYdAmYa6Eywe/8xR+uyfGTvllwsA4odxZM8Kdi8NtdvQaFS98+jCyGaOjJ44yqBWxQksgFp9u5I=:1.us-east-1.pAEstvQcjyhQNKGKcgSlzI7SVR8ZSG5wSmKwiz/A8Dg=:AmazonSES
+X-SES-Outgoing: 2026.10.24-54.240.11.162
+
+------=_Part_1234_5678.1792805469000
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Your October statement is ready =E2=80=94 view it at https://keymimestate.com/s=
+tatements/2026-10
+
+------=_Part_1234_5678.1792805469000
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<p>Your October statement is ready.</p><p><a href=3D"https://track.example-esp.=
+net/c/abc">https://keymimestate.com/statements</a></p>
+------=_Part_1234_5678.1792805469000--

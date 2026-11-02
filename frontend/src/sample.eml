@@ -1,0 +1,69 @@
+Delivered-To: you@example.org
+Received: by 2002:a05:7300:4f0b:b0:18e:9a41:1b2c with SMTP id hx11csp2312345dyb;
+        Fri, 23 Oct 2026 18:31:14 -0700 (PDT)
+X-Received: by 2002:a05:6214:2a48:b0:6d8:aa12:3f01 with SMTP id jv8-20020a0562142a4800b006d8aa123f01mr98765432qvb.23.1792805474120;
+        Fri, 23 Oct 2026 18:31:14 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1792805474; cv=none;
+        d=google.com; s=arc-20240605;
+        b=ExampleArcSealSignatureValueAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=feedback-id:list-unsubscribe-post:list-unsubscribe:mime-version:subject:message-id:to:from:date:dkim-signature:dkim-signature;
+        bh=frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;
+        b=ExampleArcMessageSignatureBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@example.com header.s=s1 header.b=AbCdEf12;
+       dkim=pass header.i=@amazonses.com header.s=224i4yxa5dv7c2xz3womw6peuasteono header.b=GhIjKl34;
+       spf=pass (google.com: domain of 010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com designates 54.240.8.30 as permitted sender) smtp.mailfrom=010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=example.com
+Return-Path: <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com>
+Received: from a8-30.smtp-out.amazonses.com (a8-30.smtp-out.amazonses.com. [54.240.8.30])
+        by mx.google.com with ESMTPS id 6a1803df08f44-6d8aa1c2e04si123456786d6.412.2026.10.24.01.31.13
+        for <you@example.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 23 Oct 2026 18:31:14 -0700 (PDT)
+Received-SPF: pass (google.com: domain of 010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com designates 54.240.8.30 as permitted sender) client-ip=54.240.8.30;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@example.com header.s=s1 header.b=AbCdEf12;
+       dkim=pass header.i=@amazonses.com header.s=224i4yxa5dv7c2xz3womw6peuasteono header.b=GhIjKl34;
+       spf=pass (google.com: domain of 010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com designates 54.240.8.30 as permitted sender) smtp.mailfrom=010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@bounce.example.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=example.com
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=s1; d=example.com; t=1792805429;
+	h=Date:From:To:Message-ID:Subject:MIME-Version:Content-Type:List-Unsubscribe:List-Unsubscribe-Post;
+	bh=frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;
+	b=AbCdEf12ExampleSignatureCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/simple;
+	s=224i4yxa5dv7c2xz3womw6peuasteono; d=amazonses.com; t=1792805429;
+	h=Date:From:To:Message-ID:Subject:MIME-Version:Content-Type:List-Unsubscribe:List-Unsubscribe-Post:Feedback-ID;
+	bh=frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;
+	b=GhIjKl34ExampleSignatureDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=
+Date: Sat, 24 Oct 2026 01:30:29 +0000
+From: Example Store <orders@example.com>
+To: you@example.org
+Message-ID: <010001a16b87e2b3-26f74ee6-4f88-48cc-8978-de87228e21df-000000@email.amazonses.com>
+Subject: =?UTF-8?Q?Your_order_has_shipped_=F0=9F=93=A6?=
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_Part_1_2026.1792805429"
+List-Unsubscribe: <https://example.com/unsubscribe?u=Zx81>, <mailto:unsubscribe@example.com>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Feedback-ID: ::1.us-east-1.p3mVQ1XdE+sYmJb/HXJlAtsXt4Y5Lxow9xaTkCD2ZKXV0nNw=:AmazonSES
+X-SES-Outgoing: 2026.10.24-54.240.8.30
+
+------=_Part_1_2026.1792805429
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Good news: your order #10482 has shipped.
+
+Track it here: https://example.com/orders/10482
+
+------=_Part_1_2026.1792805429
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>Good news: your order <b>#10482</b> has shipped.</p>
+<p><a href=3D"https://example.com/orders/10482">Track your package</a></p>
+<p><a href=3D"https://click.example.net/r/abc123">https://example.com/account</a></p>
+</body></html>
+------=_Part_1_2026.1792805429--

@@ -1,0 +1,23 @@
+/.phpunit.cache
+/node_modules
+/vendor
+/app/vendor
+.env
+.env.development
+.env.backup
+.env.production
+auth.json
+npm-debug.log
+.phpunit.result.cache
+/.fleet
+/.idea
+
+# Build output and runtime data
+/build
+/dist
+/storage/*
+!/storage/.gitignore
+!/storage/.htaccess
+
+# Real emails used for manual testing
+/samples
