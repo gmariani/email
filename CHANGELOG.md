@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [20261102]
+### Changed
+- Outlook `.msg` files are read in full instead of headers only: the plain-text body, the HTML body (taken from Outlook's own copy, or unwrapped from the RTF body it keeps for HTML mail), inline images, attachments and attached Outlook items are rebuilt into a MIME message, so the Content tab, links and attachments work as for `.eml`. Attached items with no internet headers get From, To, Subject and Date from Outlook's own fields.
+- DKIM body hashes aren't checked for a body rebuilt from a `.msg` (it can't match what was signed); the Authentication tab says why instead of reporting the body as altered.
+
 ## [20261026]
 ### Added
 - "Who sent it": what the From line claims next to what the headers show (logged-in account, envelope sender, DKIM signer, sending-service account ids, the server that handed the message to the recipient's provider), with mismatches flagged.

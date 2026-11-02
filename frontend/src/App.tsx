@@ -22,6 +22,8 @@ import { useLiveAuth, useNetworkLookup, useRelayLookup } from './useRelayLookup'
 // The pasted source survives a reload of this tab, but never leaves the browser
 // and is gone when the tab is closed.
 const STORAGE_KEY = 'email-analyzer:source';
+/** The rest of the LoadedEmail (note, bodyRebuilt), as JSON. */
+const META_KEY = 'email-analyzer:meta';
 
 function stored(): string {
     try {
@@ -31,10 +33,24 @@ function stored(): string {
     }
 }
 
-function store(source: string | null) {
+function storedMeta(): Omit<LoadedEmail, 'source'> {
     try {
-        if (source === null) sessionStorage.removeItem(STORAGE_KEY);
-        else if (source.length < 2_000_000) sessionStorage.setItem(STORAGE_KEY, source);
+        const meta = JSON.parse(sessionStorage.getItem(META_KEY) ?? '{}');
+        return { note: typeof meta.note === 'string' ? meta.note : null, bodyRebuilt: meta.bodyRebuilt === true };
+    } catch {
+        return { note: null };
+    }
+}
+
+function store(email: LoadedEmail | null) {
+    try {
+        if (email === null) {
+            sessionStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(META_KEY);
+        } else if (email.source.length < 2_000_000) {
+            sessionStorage.setItem(STORAGE_KEY, email.source);
+            sessionStorage.setItem(META_KEY, JSON.stringify({ note: email.note, bodyRebuilt: email.bodyRebuilt ?? false }));
+        }
     } catch {
         // Private mode or storage full: reloading will just start fresh.
     }
@@ -44,12 +60,13 @@ export function App() {
     const [state, setState] = useState<{ analysis: Analysis; note: string | null; source: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const open = ({ source, note }: LoadedEmail, remember = true) => {
+    const open = (email: LoadedEmail, remember = true) => {
+        const { source, note, bodyRebuilt = false } = email;
         try {
-            const analysis = analyze(source);
+            const analysis = analyze(source, { bodyRebuilt });
             setState({ analysis, note, source });
             setError(null);
-            if (remember) store(source);
+            if (remember) store(email);
             window.scrollTo(0, 0);
         } catch (e) {
             setError(e instanceof NotAnEmailError ? e.message : `Couldn't read that email: ${e instanceof Error ? e.message : String(e)}`);
@@ -60,7 +77,7 @@ export function App() {
     // Re-open what was being looked at before a reload.
     useEffect(() => {
         const previous = stored();
-        if (previous && window.location.hash) open({ source: previous, note: null }, false);
+        if (previous && window.location.hash) open({ source: previous, ...storedMeta() }, false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -78,7 +95,7 @@ export function App() {
     return (
         <>
             <TopBar onNew={state ? reset : undefined} />
-            {state ? <Results key={state.source} analysis={state.analysis} note={state.note} onOpen={(source) => open({ source, note: 'An email that was attached to the previous one.' })} /> : <InputPanel initial={stored()} error={error} onAnalyze={(email) => open(email)} />}
+            {state ? <Results key={state.source} analysis={state.analysis} note={state.note} onOpen={(source) => open({ source, note: 'An email that was attached to the previous one.', bodyRebuilt: state.analysis.bodyRebuilt })} /> : <InputPanel initial={stored()} error={error} onAnalyze={(email) => open(email)} />}
         </>
     );
 }

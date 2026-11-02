@@ -19,10 +19,12 @@ export interface Analysis {
     mime: MimePart | null;
     /** Index of the hop where the recipient's side took over (see sides.ts). */
     handoff: number | null;
+    /** The body was rebuilt (from an Outlook .msg), so it can't be checked against DKIM's body hash. */
+    bodyRebuilt: boolean;
 }
 
 /** Everything the page shows, worked out from the message source alone (no network). */
-export function analyze(source: string): Analysis {
+export function analyze(source: string, { bodyRebuilt = false } = {}): Analysis {
     const message = splitMessage(source);
     const { headers } = message;
     const route = buildRoute(headers);
@@ -42,5 +44,6 @@ export function analyze(source: string): Analysis {
         headers: explainHeaders(context, services),
         mime: message.hasBody && message.body.trim() ? parseMime(headers, message.body) : null,
         handoff,
+        bodyRebuilt,
     };
 }

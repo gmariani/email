@@ -18,6 +18,35 @@ export function decoderFor(charset: string | null | undefined): TextDecoder {
     return decoder;
 }
 
+const CODEPAGES: Record<number, string> = {
+    874: 'windows-874',
+    932: 'shift_jis',
+    936: 'gbk',
+    949: 'euc-kr',
+    950: 'big5',
+    1200: 'utf-16le',
+    1201: 'utf-16be',
+    20127: 'us-ascii',
+    20866: 'koi8-r',
+    21866: 'koi8-u',
+    50220: 'iso-2022-jp',
+    50221: 'iso-2022-jp',
+    50222: 'iso-2022-jp',
+    51932: 'euc-jp',
+    51949: 'euc-kr',
+    54936: 'gb18030',
+    65001: 'utf-8',
+};
+
+/** A Windows code page number (Outlook's PR_INTERNET_CPID, RTF's \ansicpg) as a MIME charset: 1252 => "windows-1252". */
+export function codepageCharset(codepage: number | null | undefined): string {
+    if (!codepage) return 'windows-1252';
+    if (CODEPAGES[codepage]) return CODEPAGES[codepage];
+    if (codepage >= 1250 && codepage <= 1258) return `windows-${codepage}`;
+    if (codepage >= 28591 && codepage <= 28606) return `iso-8859-${codepage - 28590}`;
+    return 'windows-1252';
+}
+
 export function decodeBytes(bytes: Uint8Array, charset: string | null | undefined): string {
     return decoderFor(charset).decode(bytes);
 }
@@ -42,6 +71,13 @@ export function decodeBase64(text: string): Uint8Array {
     } catch {
         return new Uint8Array();
     }
+}
+
+/** Base64 in 76-character lines, as MIME bodies carry it. */
+export function encodeBase64(bytes: Uint8Array): string {
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(binary).replace(/.{76}/g, '$&\n').replace(/\n$/, '');
 }
 
 /** Quoted-printable (RFC 2045). In headers (RFC 2047 "Q"), "_" also means a space. */

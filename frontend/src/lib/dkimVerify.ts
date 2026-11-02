@@ -9,7 +9,7 @@ export interface DkimVerification {
     /** The body hash we computed matches bh=. null: couldn't compute. */
     bodyHashOk: boolean | null;
     computedBodyHash: string | null;
-    /** Set when the body only matched after undoing a known export quirk. */
+    /** Set when the body only matched after undoing a known export quirk, or why it couldn't be checked. */
     bodyNote: string | null;
     /** The signature over the headers verifies with the published key. */
     signatureOk: boolean | null;
@@ -101,6 +101,8 @@ export async function verifyDkim(
     headers: HeaderField[],
     body: string | null,
     key: { publicKey: string | null; keyType: string },
+    /** Why there's no body to hash, when body is null. */
+    noBody = "Only headers were provided, so the body hash can't be checked.",
 ): Promise<DkimVerification> {
     const result: DkimVerification = { bodyHashOk: null, computedBodyHash: null, bodyNote: null, signatureOk: null, error: null };
     const tags = signature.tags;
@@ -113,7 +115,8 @@ export async function verifyDkim(
 
     // Body hash.
     if (body === null) {
-        result.error = 'Only headers were provided, so the body hash can\'t be checked.';
+        result.error = noBody;
+        result.bodyNote = noBody;
     } else {
         const want = (tags.bh ?? '').replace(/\s+/g, '');
         const bodyHash = async (text: string) => {

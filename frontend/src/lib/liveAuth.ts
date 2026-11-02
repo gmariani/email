@@ -50,11 +50,13 @@ export interface LiveAuth {
 }
 
 export async function evaluate(analysis: Analysis, query: CheckQuery, checks: AuthChecks): Promise<LiveAuth> {
-    const body = analysis.message.hasBody ? analysis.message.body : null;
+    const body = analysis.message.hasBody && !analysis.bodyRebuilt ? analysis.message.body : null;
+    const noBody = analysis.bodyRebuilt ? "This body was rebuilt from an Outlook .msg file, which doesn't keep the original, so the body hash can't be checked." : undefined;
     const dkim = await Promise.all(
         analysis.auth.dkim.map(async (signature): Promise<LiveDkim> => {
             const key = checks.dkim.find((k) => k.domain === signature.domain && k.selector === signature.selector?.toLowerCase()) ?? null;
-            const verification = key?.found && key.publicKey ? await verifyDkim(signature, analysis.message.headers, body, { publicKey: key.publicKey, keyType: key.keyType ?? 'rsa' }) : null;
+            const verification =
+                key?.found && key.publicKey ? await verifyDkim(signature, analysis.message.headers, body, { publicKey: key.publicKey, keyType: key.keyType ?? 'rsa' }, noBody) : null;
             return { signature, key, verification, valid: !!verification?.signatureOk && verification.bodyHashOk !== false };
         }),
     );

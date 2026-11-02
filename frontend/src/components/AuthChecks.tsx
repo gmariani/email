@@ -236,7 +236,7 @@ function DkimSignatureCheck({ analysis, item, explained }: { analysis: Analysis;
     } else if (verification.signatureOk && verification.bodyHashOk) {
         headline = <Status tone="good">Valid signature by <DomainLink domain={domain} />: it signed this message and the content is unchanged.</Status>;
     } else if (verification.signatureOk && verification.bodyHashOk === null) {
-        headline = <Status tone="good">The signature by <DomainLink domain={domain} /> over the headers is valid. (No body was provided, so the body hash wasn't checked.)</Status>;
+        headline = <Status tone="good">The signature by <DomainLink domain={domain} /> over the headers is valid. ({verification.bodyNote ?? "No body was provided, so the body hash wasn't checked."})</Status>;
     } else if (verification.signatureOk) {
         headline = (
             <Status tone="warn">

@@ -15,6 +15,8 @@ import { decodeThreadIndex } from './explain/standard';
 import { formatInZone, formatUtc } from './format';
 import { NotAnEmailError, splitMessage } from './message';
 import { leafParts } from './mime';
+import { msgToEml, type MsgSource } from './outlook';
+import { htmlFromRtf } from './rtf';
 import { parseReceived, securityOf } from './received';
 import { buildRoute } from './route';
 import { authConflicts, checkQuery, withLive, type LiveAuth } from './liveAuth';
@@ -606,5 +608,85 @@ describe('look-alike text', () => {
         const found = findLookalikes(a);
         expect(found.map((f) => f.where)).toEqual(['From display name and Reply-To display name', 'Reply-To address']);
         expect(found[1]).toMatchObject({ shown: 'x@pаypal.com', punycode: 'xn--pypal-4ve.com' });
+    });
+});
+
+describe('Outlook .msg files', () => {
+    it('unwraps the HTML that Outlook keeps inside an RTF body', () => {
+        const BACKSLASH = String.fromCharCode(92);
+        const rtf = [
+            String.raw`{\rtf1\ansi\ansicpg1252\fromhtml1 \deff0{\fonttbl{\f0\fswiss Arial;}}`,
+            String.raw`{\*\htmltag19 <html>}{\*\htmltag3 \par }`,
+            String.raw`{\*\htmltag64 <p class="x">}\htmlrtf {\b \htmlrtf0 Caf\'e9 \{ok\} ${BACKSLASH}u8364?5\htmlrtf \par }\htmlrtf0 `,
+            String.raw`{\*\mhtmltag84 <img src="image001.png">}{\*\htmltag84 <img src="cid:image001.png">}`,
+            String.raw`{\*\htmltag72 </p>}{\*\htmltag27 </html>}}`,
+        ].join('\r\n');
+        expect(htmlFromRtf(rtf)).toBe('<html>\r\n<p class="x">Café {ok} €5<img src="cid:image001.png"></p></html>');
+        expect(htmlFromRtf(String.raw`{\rtf1\ansi\fromtext Plain}`)).toBeNull();
+    });
+
+    const msg = (fields: Omit<MsgSource['fields'], 'dataType'>, files: Record<string, Uint8Array | MsgSource> = {}): MsgSource => ({
+        fields: { ...fields, dataType: 'msg' },
+        content: (a) => {
+            const file = files[a.name ?? ''];
+            if (!file) throw new Error('no data');
+            return file instanceof Uint8Array ? file : new TextEncoder().encode(a.name);
+        },
+        open: (bytes) => files[new TextDecoder().decode(bytes)] as MsgSource,
+        rtf: (compressed) => new TextDecoder().decode(compressed),
+    });
+
+    it('puts the headers, both bodies and the attachments back together as MIME', () => {
+        const inner = msg({ senderName: 'Bob', senderSmtpAddress: 'bob@example.com', subject: 'Inner', recipients: [{ dataType: 'recipient', name: 'Al', smtpAddress: 'al@example.org', recipType: 'to' }], body: 'Inner body' });
+        const rebuilt = msgToEml(
+            msg(
+                {
+                    headers: 'Received: from mx.example.com by mx.example.org; Mon, 5 Jan 2026 10:00:00 +0000\r\nFrom: Ann <ann@example.com>\r\nSubject: Hi\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative;\r\n\tboundary="original"\r\n\r\n',
+                    body: 'Hello\r\nthere',
+                    compressedRtf: new TextEncoder().encode(String.raw`{\rtf1\ansi\fromhtml1 {\*\htmltag19 <p>Hello <img src="cid:logo@1"></p>}}`),
+                    attachments: [
+                        { dataType: 'attachment', name: 'logo.png', fileName: 'logo.png', pidContentId: 'logo@1', attachmentHidden: true },
+                        { dataType: 'attachment', name: 'reçu.pdf', fileName: 'reçu.pdf' },
+                        { dataType: 'attachment', name: 'Inner', innerMsgContent: true },
+                        { dataType: 'attachment', name: 'Linked object' },
+                    ],
+                },
+                { 'logo.png': Uint8Array.of(0x89, 0x50, 0x4e, 0x47), 'reçu.pdf': new TextEncoder().encode('%PDF'), Inner: inner },
+            ),
+        );
+        expect(rebuilt.attachments).toEqual(['logo.png', 'reçu.pdf', 'Inner.msg']);
+        expect(rebuilt.skipped).toEqual(['Linked object']);
+        expect(rebuilt.source).not.toContain('boundary="original"');
+
+        const a = analyze(rebuilt.source, { bodyRebuilt: true });
+        expect(a.bodyRebuilt).toBe(true);
+        expect(a.subject).toBe('Hi');
+        expect(a.route.hops).toHaveLength(1);
+        expect(a.mime?.type).toBe('multipart/mixed');
+        const parts = leafParts(a.mime!);
+        expect(parts.map((p) => [p.type, p.filename, p.contentId])).toEqual([
+            ['text/plain', null, null],
+            ['text/html', null, null],
+            ['image/png', 'logo.png', 'logo@1'],
+            ['application/pdf', 'reçu.pdf', null],
+            ['message/rfc822', 'Inner.eml', null],
+        ]);
+        expect(parts[0].text).toBe('Hello\nthere');
+        expect(parts[1].text).toBe('<p>Hello <img src="cid:logo@1"></p>');
+        expect(parts[2].size).toBe(4);
+        expect(parts[2].disposition).toBe('inline');
+
+        // An attached Outlook item with no internet headers gets them from Outlook's own fields.
+        const attached = analyze(parts[4].message!);
+        expect(attached.from).toMatchObject({ name: 'Bob', address: 'bob@example.com' });
+        expect(attached.to[0]).toMatchObject({ name: 'Al', address: 'al@example.org' });
+        expect(attached.subject).toBe('Inner');
+        expect(leafParts(attached.mime!)[0].text).toBe('Inner body');
+    });
+
+    it("doesn't hold a rebuilt body against the DKIM signature", async () => {
+        const [signature] = summarizeAuth(splitMessage(rfc8463).headers).dkim;
+        const result = await verifyDkim(signature, [], null, { publicKey: null, keyType: 'rsa' }, 'Rebuilt from Outlook.');
+        expect(result).toMatchObject({ bodyHashOk: null, bodyNote: 'Rebuilt from Outlook.' });
     });
 });
