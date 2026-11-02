@@ -14,7 +14,7 @@ import { decodeSpamcause } from './explain/spam';
 import { decodeThreadIndex } from './explain/standard';
 import { formatInZone, formatUtc } from './format';
 import { NotAnEmailError, splitMessage } from './message';
-import { leafParts } from './mime';
+import { leafParts, unwrapLink } from './mime';
 import { msgToEml, type MsgSource } from './outlook';
 import { htmlFromRtf } from './rtf';
 import { parseReceived, securityOf } from './received';
@@ -688,5 +688,19 @@ describe('Outlook .msg files', () => {
         const [signature] = summarizeAuth(splitMessage(rfc8463).headers).dkim;
         const result = await verifyDkim(signature, [], null, { publicKey: null, keyType: 'rsa' }, 'Rebuilt from Outlook.');
         expect(result).toMatchObject({ bodyHashOk: null, bodyNote: 'Rebuilt from Outlook.' });
+    });
+});
+
+describe('link redirects', () => {
+    it('finds where protection and tracking wrappers really go', () => {
+        expect(unwrapLink('https://linkprotect.cudasvc.com/url?a=http%3a%2f%2fwww.erie.pa.us&c=E,1,-zqw773r9ZVhpkuRuuxn-5kOG8risz5ZtVMKJ9GxVa-o3V_XNe5gfg1BlPSN7UYmyBxuuddn18AuhBFYjmHPxkzaKmqQUUUzINxZvYb3OlF4vEP3EQ,,&typo=1')).toBe('http://www.erie.pa.us');
+        expect(unwrapLink('https://nam12.safelinks.protection.outlook.com/?url=https%3A%2F%2Fexample.com%2Fpay%3Fid%3D1&data=05%7C01&reserved=0')).toBe('https://example.com/pay?id=1');
+        expect(unwrapLink('https://urldefense.proofpoint.com/v2/url?u=https-3A__example.com_path-3Fa-3D1&d=DwMF&c=x')).toBe('https://example.com/path?a=1');
+        expect(unwrapLink('https://urldefense.com/v3/__https://example.com/login__;!!ABC123$')).toBe('https://example.com/login');
+        expect(unwrapLink('https://www.google.com/url?q=https://example.org/&sa=D')).toBe('https://example.org/');
+        // Safe Links around Proofpoint
+        const inner = 'https://urldefense.com/v3/__https://example.net/__;!!x$';
+        expect(unwrapLink(`https://eur01.safelinks.protection.outlook.com/?url=${encodeURIComponent(inner)}`)).toBe('https://example.net/');
+        expect(unwrapLink('https://example.com/page?id=5')).toBeNull();
     });
 });

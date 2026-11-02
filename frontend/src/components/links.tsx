@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { inspectorLink } from '../api';
+import { organizationalDomain } from '../lib/auth';
 import { flag, locationLabel } from '../lib/format';
 import type { LookupState } from '../types';
 import { Marked } from './Lookalikes';
@@ -34,6 +35,49 @@ export function EmailLink({ address }: { address: string }) {
             <Marked text={address.slice(0, at + 1)} />
             <DomainLink domain={address.slice(at + 1).replace(/>$/, '')} />
         </>
+    );
+}
+
+/**
+ * A URL with its registered domain picked out, so "paypal.com.evil.example"
+ * or "user@host" tricks can't hide the site it really opens.
+ */
+export function UrlText({ url }: { url: string }) {
+    const m = /^([a-z][\w+.-]*:\/\/)([^/?#]*)(.*)$/is.exec(url);
+    if (!m) return <code className="small">{url}</code>;
+    const [, scheme, authority, rest] = m;
+    const at = authority.lastIndexOf('@');
+    const userinfo = authority.slice(0, at + 1);
+    const hostPort = authority.slice(at + 1);
+    const host = hostPort.replace(/:\d+$/, '');
+    const port = hostPort.slice(host.length);
+    const domain = /^[\d.]+$|^\[/.test(host) ? host : organizationalDomain(host);
+    const sub = host.slice(0, host.length - domain.length);
+    return (
+        <code className="small url-text">
+            <span className="url-dim">
+                {scheme}
+                {userinfo}
+                {sub}
+            </span>
+            <mark className="url-domain">{host.slice(sub.length)}</mark>
+            <span className="url-dim">
+                {port}
+                {rest}
+            </span>
+        </code>
+    );
+}
+
+/** Opens VirusTotal's report for a domain or a full URL. */
+export function VirusTotalLink({ domain, url }: { domain?: string | null; url?: string }) {
+    const href = url ? `https://www.virustotal.com/gui/search/${encodeURIComponent(url)}` : domain ? `https://www.virustotal.com/gui/domain/${encodeURIComponent(domain)}` : null;
+    if (!href) return null;
+    return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="vt-link small text-nowrap" title={url ? 'Check this URL on VirusTotal' : `Check ${domain} on VirusTotal`}>
+            <i className="bi bi-shield-check me-1" />
+            {url ? 'URL' : 'Domain'}
+        </a>
     );
 }
 

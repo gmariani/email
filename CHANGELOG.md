@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [20261102]
+### Added
+- Links: the registered domain is highlighted in each URL, so look-alike subdomains and `user@host` tricks stand out, and each link has VirusTotal checks for its domain and full URL.
+- Links wrapped by a protection or tracking service (Barracuda Link Protect, Microsoft Safe Links, Proofpoint URL Defense v2/v3, Google redirects and other `?url=`-style redirects, including nested ones) show where they really go. The "text shows a different site" warning and the look-alike check use that real destination.
+
 ### Changed
 - Outlook `.msg` files are read in full instead of headers only: the plain-text body, the HTML body (taken from Outlook's own copy, or unwrapped from the RTF body it keeps for HTML mail), inline images, attachments and attached Outlook items are rebuilt into a MIME message, so the Content tab, links and attachments work as for `.eml`. Attached items with no internet headers get From, To, Subject and Date from Outlook's own fields.
 - DKIM body hashes aren't checked for a body rebuilt from a `.msg` (it can't match what was signed); the Authentication tab says why instead of reporting the body as altered.

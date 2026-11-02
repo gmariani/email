@@ -153,6 +153,9 @@ export interface FoundLink {
     host: string | null;
     /** The link's visible text, for HTML links. */
     text: string | null;
+    /** Where a known redirector (Barracuda, Safe Links, Proofpoint, Google…) sends the click, when the URL is one. */
+    target: string | null;
+    targetHost: string | null;
     /** The visible text names a different site than the link goes to. */
     mismatch: boolean;
 }
@@ -169,20 +172,70 @@ export function findLinks(root: MimePart): FoundLink[] {
                 if (!/^https?:\/\//i.test(url)) continue;
                 const text = (a.textContent ?? '').replace(/\s+/g, ' ').trim() || null;
                 const host = hostOf(url);
+                const target = unwrapLink(url);
+                const targetHost = target ? hostOf(target) : null;
+                const lands = targetHost ?? host;
                 const shown = text ? hostOf(text.startsWith('http') ? text : `https://${text}`) : null;
                 const looksLikeUrl = !!text && /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(text);
-                const mismatch = looksLikeUrl && !!shown && !!host && shown !== host && !host.endsWith(`.${shown}`);
+                const mismatch = looksLikeUrl && !!shown && !!lands && shown !== lands && !lands.endsWith(`.${shown}`);
                 const key = `${url}\n${text}`;
-                if (!links.has(key)) links.set(key, { url, host, text, mismatch });
+                if (!links.has(key)) links.set(key, { url, host, text, target, targetHost, mismatch });
             }
         } else {
             for (const m of part.text.matchAll(/\bhttps?:\/\/[^\s<>"')\]]+/gi)) {
                 const url = m[0].replace(/[.,;:!?]+$/, '');
-                if (![...links.values()].some((l) => l.url === url)) links.set(url, { url, host: hostOf(url), text: null, mismatch: false });
+                if ([...links.values()].some((l) => l.url === url)) continue;
+                const target = unwrapLink(url);
+                links.set(url, { url, host: hostOf(url), text: null, target, targetHost: target ? hostOf(target) : null, mismatch: false });
             }
         }
     }
     return [...links.values()];
+}
+
+/** Query parameters redirectors put the real address in, most specific first. */
+const TARGET_PARAMS = ['url', 'u', 'a', 'q', 'target', 'dest', 'destination', 'redirect', 'redirect_url', 'redirect_uri', 'link', 'r'];
+
+/**
+ * Where a link-protection or tracking redirect really goes, following nested
+ * wrappers (Safe Links around Proofpoint, say). Null when the URL isn't one.
+ */
+export function unwrapLink(url: string): string | null {
+    let current = url;
+    for (let depth = 0; depth < 5; depth++) {
+        const next = unwrapOnce(current);
+        if (!next || next === current) break;
+        current = next;
+    }
+    return current === url ? null : current;
+}
+
+function unwrapOnce(url: string): string | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    // Proofpoint v3: https://urldefense.com/v3/__https://example.com/__;!!…
+    const v3 = /^https?:\/\/[^/]*urldefense\.com\/v3\/__(.+?)__;/i.exec(url);
+    if (v3) return v3[1];
+    // Proofpoint v2: ?u=https-3A__example.com_path (- for %, _ for /)
+    if (parsed.hostname.endsWith('urldefense.proofpoint.com')) {
+        const u = parsed.searchParams.get('u');
+        if (u) {
+            try {
+                return decodeURIComponent(u.replace(/-/g, '%').replace(/_/g, '/'));
+            } catch {
+                return null;
+            }
+        }
+    }
+    for (const name of TARGET_PARAMS) {
+        const value = parsed.searchParams.get(name)?.trim();
+        if (value && /^https?:\/\/[^/\s]/i.test(value)) return value;
+    }
+    return null;
 }
 
 function hostOf(url: string): string | null {

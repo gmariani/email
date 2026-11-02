@@ -230,9 +230,11 @@ export function findLookalikes(analysis: Analysis): LookalikeFinding[] {
     if (analysis.mime && typeof DOMParser !== 'undefined') {
         const seen = new Set<string>();
         for (const link of findLinks(analysis.mime)) {
-            if (!link.host || seen.has(link.host)) continue;
-            seen.add(link.host);
-            addDomain(out, 'link to', link.host);
+            for (const host of [link.host, link.targetHost]) {
+                if (!host || seen.has(host)) continue;
+                seen.add(host);
+                addDomain(out, 'link to', host);
+            }
         }
     }
     // The same text in two places (From and Reply-To names) is one finding.

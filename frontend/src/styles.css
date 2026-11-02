@@ -419,6 +419,32 @@ details > summary {
     color: var(--bd-violet);
 }
 
+.url-text .url-dim {
+    opacity: 0.6;
+}
+
+.url-text .url-domain {
+    padding: 0 0.15em;
+    color: #fff;
+    font-weight: 600;
+    background-color: rgba(var(--bd-violet-rgb), 0.45);
+    border-radius: 0.2em;
+}
+
+.vt-link {
+    color: var(--bs-secondary-color);
+    text-decoration: none;
+}
+
+.vt-link:hover {
+    color: var(--bd-violet);
+}
+
+.link-forward {
+    padding-left: 0.75rem;
+    border-left: 2px solid rgba(var(--bd-violet-rgb), 0.6);
+}
+
 .ip-label code {
     color: inherit;
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Alert, Button, Nav } from 'react-bootstrap';
-import { DomainLink } from '../components/links';
+import { DomainLink, UrlText, VirusTotalLink } from '../components/links';
 import { CodeBlock, HelpButton, Muted, SectionTitle } from '../components/ui';
 import type { Analysis } from '../lib/analyze';
 import { formatBytes } from '../lib/format';
@@ -71,7 +71,7 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
             </div>
 
             <SectionTitle className="mt-5">
-                Links <HelpButton>Every web link in the message. A link whose visible text shows one address but goes to another is a classic phishing trick (though newsletters do it too, for click tracking).</HelpButton>
+                Links <HelpButton>Every web link in the message. A link whose visible text shows one address but goes to another is a classic phishing trick (though newsletters do it too, for click tracking). Links wrapped by a protection or tracking service (Barracuda, Microsoft Safe Links, Proofpoint…) show where they redirect to.</HelpButton>
             </SectionTitle>
             <div className="bd-group row">
                 {links.length ? (
@@ -87,12 +87,16 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
                                 {links.map((link, i) => (
                                     <tr key={i}>
                                         <td className="text-break">
-                                            {link.host && (
-                                                <div>
-                                                    <DomainLink domain={link.host} />
+                                            <LinkTarget url={link.url} host={link.host} />
+                                            {link.target && (
+                                                <div className="link-forward mt-2">
+                                                    <div className="small text-body-secondary">
+                                                        <i className="bi bi-arrow-return-right me-1" />
+                                                        Redirects to
+                                                    </div>
+                                                    <LinkTarget url={link.target} host={link.targetHost} />
                                                 </div>
                                             )}
-                                            <code className="small">{link.url}</code>
                                         </td>
                                         <td className="text-break">
                                             {link.text ?? <Muted>(plain-text link)</Muted>}
@@ -121,6 +125,21 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
                     </div>
                 </>
             )}
+        </>
+    );
+}
+
+function LinkTarget({ url, host }: { url: string; host: string | null }) {
+    return (
+        <>
+            {host && (
+                <div className="d-flex flex-wrap align-items-baseline gap-2">
+                    <DomainLink domain={host} />
+                    <VirusTotalLink domain={host} />
+                    <VirusTotalLink url={url} />
+                </div>
+            )}
+            <UrlText url={url} />
         </>
     );
 }
