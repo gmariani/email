@@ -231,6 +231,18 @@ function unwrapOnce(url: string): string | null {
             }
         }
     }
+    // Amazon SES click tracking: https://…awstrack.me/L0/https:%2F%2Fexample.com%2F/2/<id>/<signature>
+    if (parsed.hostname.endsWith('.awstrack.me')) {
+        const segment = /^\/C?L0\/([^/]+)/.exec(parsed.pathname)?.[1];
+        if (segment) {
+            try {
+                const target = decodeURIComponent(segment);
+                if (/^https?:\/\/[^/\s]/i.test(target)) return target;
+            } catch {
+                return null;
+            }
+        }
+    }
     for (const name of TARGET_PARAMS) {
         const value = parsed.searchParams.get(name)?.trim();
         if (value && /^https?:\/\/[^/\s]/i.test(value)) return value;

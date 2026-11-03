@@ -698,6 +698,9 @@ describe('link redirects', () => {
         expect(unwrapLink('https://urldefense.proofpoint.com/v2/url?u=https-3A__example.com_path-3Fa-3D1&d=DwMF&c=x')).toBe('https://example.com/path?a=1');
         expect(unwrapLink('https://urldefense.com/v3/__https://example.com/login__;!!ABC123$')).toBe('https://example.com/login');
         expect(unwrapLink('https://www.google.com/url?q=https://example.org/&sa=D')).toBe('https://example.org/');
+        expect(unwrapLink('https://vwbrw9dy.r.us-east-1.awstrack.me/L0/https:%2F%2Fawsworkshop.io%2Feks%2Fsaas%3Ftrk=ac0635b0-d034-40d7-bb5a-68e7d8058160%26sc_channel=el/2/010001a1a2706a15-a964f547-9239-4d3f-ab3b-09f8def0cb78-000000/yQI88k2cji1KlOVOF3o9HGa4Ahg=473')).toBe('https://awsworkshop.io/eks/saas?trk=ac0635b0-d034-40d7-bb5a-68e7d8058160&sc_channel=el');
+        // Only Amazon's own domain gets this reading
+        expect(unwrapLink('https://awstrack.me.example.com/L0/https:%2F%2Fexample.org%2F/2/x/y')).toBeNull();
         // Safe Links around Proofpoint
         const inner = 'https://urldefense.com/v3/__https://example.net/__;!!x$';
         expect(unwrapLink(`https://eur01.safelinks.protection.outlook.com/?url=${encodeURIComponent(inner)}`)).toBe('https://example.net/');

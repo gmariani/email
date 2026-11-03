@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [20261103]
+### Added
+- Links wrapped by Amazon SES click tracking (`awstrack.me`) show where they really go.
+
 ## [20261102]
 ### Added
 - Links: the registered domain is highlighted in each URL, so look-alike subdomains and `user@host` tricks stand out, and each link has VirusTotal checks for its domain and full URL.
