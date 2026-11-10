@@ -262,7 +262,7 @@ function authHeadline({ auth }: Analysis, conflicts: AuthConflict[] = []): { var
     }
     if (auth.spf.aligned || auth.dkimVerdict.aligned) {
         const how = [auth.spf.aligned ? 'SPF' : null, auth.dkimVerdict.aligned ? 'DKIM' : null].filter(Boolean).join(' and ');
-        return { variant: 'success', icon: 'bi-check-circle-fill', title: 'Probably genuine.', text: `${how} passed for ${domain}, though no DMARC result was recorded.` };
+        return { variant: 'info', icon: 'bi-check-circle-fill', title: 'Probably genuine.', text: `${how} passed for ${domain}, though no DMARC result was recorded.` };
     }
     if (auth.spf.verdict === 'unknown' && auth.dkimVerdict.verdict !== 'pass' && auth.dkimVerdict.verdict !== 'fail' && auth.dmarc.verdict === 'unknown') {
         return { variant: 'secondary', icon: 'bi-question-circle-fill', title: 'Not checked.', text: `No server recorded SPF, DKIM or DMARC results, so nothing proves this came from ${domain}.` };
