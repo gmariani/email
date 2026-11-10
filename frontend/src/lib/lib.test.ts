@@ -707,3 +707,17 @@ describe('link redirects', () => {
         expect(unwrapLink('https://example.com/page?id=5')).toBeNull();
     });
 });
+
+describe('tokenizeHtml', () => {
+    it('splits tags, attributes, comments and entities without losing text', async () => {
+        const { tokenizeHtml } = await import('./highlight');
+        const src = '<!doctype html><!-- hi --><a href="x>y" data-x=1 hidden>Tom &amp; Jerry</a><br/> 1 < 2';
+        const tokens = tokenizeHtml(src);
+        expect(tokens.map((t) => t.text).join('')).toBe(src);
+        expect(tokens.filter((t) => t.kind === 'tag').map((t) => t.text)).toEqual(['a', 'a', 'br']);
+        expect(tokens.filter((t) => t.kind === 'attr').map((t) => t.text)).toEqual(['href', 'data-x', 'hidden']);
+        expect(tokens.filter((t) => t.kind === 'value').map((t) => t.text)).toEqual(['"x>y"', '1']);
+        expect(tokens.find((t) => t.kind === 'entity')?.text).toBe('&amp;');
+        expect(tokens.find((t) => t.kind === 'comment')?.text).toBe('<!-- hi -->');
+    });
+});

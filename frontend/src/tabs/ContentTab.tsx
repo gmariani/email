@@ -203,7 +203,7 @@ function Body({ html, plain }: { html: MimePart | undefined; plain: MimePart | u
                 </>
             )}
             {view === 'text' && plain?.text && <CodeBlock copy>{plain.text}</CodeBlock>}
-            {view === 'source' && html?.text && <CodeBlock copy>{html.text}</CodeBlock>}
+            {view === 'source' && html?.text && <CodeBlock copy language="html">{html.text}</CodeBlock>}
         </>
     );
 }

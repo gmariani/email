@@ -1,6 +1,7 @@
-import { useState, type ReactElement, type ReactNode } from 'react';
+import { useMemo, useState, type ReactElement, type ReactNode } from 'react';
 import { Alert, Button, OverlayTrigger, Popover, Spinner, Tooltip } from 'react-bootstrap';
 import type { AsyncState } from '../types';
+import { tokenizeHtml } from '../lib/highlight';
 
 /**
  * Renders server data once it arrives. Block mode shows a spinner/error
@@ -133,7 +134,17 @@ export function SectionTitle({ children, className = '' }: { children: ReactNode
     return <h2 className={`display-5 bd-group-title ${className}`}>{children}</h2>;
 }
 
-export function CodeBlock({ children, copy }: { children: string; copy?: boolean }) {
+// Past this size the span count makes the page sluggish, so big sources stay plain.
+const HIGHLIGHT_LIMIT = 400_000;
+
+export function CodeBlock({ children, copy, language }: { children: string; copy?: boolean; language?: 'html' }) {
+    const highlighted = useMemo(
+        () =>
+            language === 'html' && children.length <= HIGHLIGHT_LIMIT
+                ? tokenizeHtml(children).map((t, i) => (t.kind === 'text' ? t.text : <span key={i} className={`hl-${t.kind}`}>{t.text}</span>))
+                : null,
+        [children, language],
+    );
     return (
         <div className="bd-code-snippet">
             <div className="highlight">
@@ -142,7 +153,7 @@ export function CodeBlock({ children, copy }: { children: string; copy?: boolean
                         <CopyButton text={children} />
                     </div>
                 )}
-                <pre>{children}</pre>
+                <pre>{highlighted ?? children}</pre>
             </div>
         </div>
     );

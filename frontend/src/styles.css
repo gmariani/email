@@ -964,3 +964,31 @@ mark.lookalike {
         grid-template-columns: 1fr;
     }
 }
+
+/* HTML source highlighting */
+:root,
+[data-bs-theme="light"] {
+    --hl-tag: #0550ae;
+    --hl-attr: #8250df;
+    --hl-value: #0a3069;
+    --hl-punct: #6e7781;
+    --hl-comment: #6e7781;
+    --hl-entity: #953800;
+}
+
+[data-bs-theme="dark"] {
+    --hl-tag: #7ee787;
+    --hl-attr: #79c0ff;
+    --hl-value: #a5d6ff;
+    --hl-punct: #8b949e;
+    --hl-comment: #8b949e;
+    --hl-entity: #ffa657;
+}
+
+.hl-tag { color: var(--hl-tag); }
+.hl-attr { color: var(--hl-attr); }
+.hl-value { color: var(--hl-value); }
+.hl-punct { color: var(--hl-punct); }
+.hl-comment { color: var(--hl-comment); font-style: italic; }
+.hl-doctype { color: var(--hl-comment); }
+.hl-entity { color: var(--hl-entity); }
