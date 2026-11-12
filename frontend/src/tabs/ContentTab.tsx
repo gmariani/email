@@ -71,7 +71,7 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
             </div>
 
             <SectionTitle className="mt-5">
-                Links <HelpButton>Every web link in the message. A link whose visible text shows one address but goes to another is a classic phishing trick (though newsletters do it too, for click tracking). Links wrapped by a protection or tracking service (Barracuda, Microsoft Safe Links, Proofpoint…) show where they redirect to.</HelpButton>
+                Links <HelpButton>Every link in the message: web pages, plus email (mailto:) and phone (tel:) links, which phishing uses to get you to write or call instead of click. A link whose visible text shows one address but goes to another is a classic phishing trick (though newsletters do it too, for click tracking). Links wrapped by a protection or tracking service (Barracuda, Microsoft Safe Links, Proofpoint…) show where they redirect to.</HelpButton>
             </SectionTitle>
             <div className="bd-group row">
                 {links.length ? (
@@ -103,7 +103,7 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
                                             {link.mismatch && (
                                                 <div className="text-warning small">
                                                     <i className="bi bi-exclamation-triangle-fill me-1" />
-                                                    The text shows a different site than the link opens.
+                                                    {/^mailto:/i.test(link.target ?? link.url) ? 'The text shows a different address than the email goes to.' : 'The text shows a different site than the link opens.'}
                                                 </div>
                                             )}
                                         </td>
@@ -113,7 +113,7 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
                         </table>
                     </div>
                 ) : (
-                    <p className="mb-0">No web links.</p>
+                    <p className="mb-0">No links.</p>
                 )}
             </div>
 
@@ -136,7 +136,7 @@ function LinkTarget({ url, host }: { url: string; host: string | null }) {
                 <div className="d-flex flex-wrap align-items-baseline gap-2">
                     <DomainLink domain={host} />
                     <VirusTotalLink domain={host} />
-                    <VirusTotalLink url={url} />
+                    {/^https?:/i.test(url) && <VirusTotalLink url={url} />}
                 </div>
             )}
             <UrlText url={url} />

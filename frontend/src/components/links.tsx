@@ -43,6 +43,23 @@ export function EmailLink({ address }: { address: string }) {
  * or "user@host" tricks can't hide the site it really opens.
  */
 export function UrlText({ url }: { url: string }) {
+    // mailto:someone@host?subject=… — the address's domain is where it goes
+    const mail = /^(mailto:[^@?,]*@)([^?,]*)(.*)$/is.exec(url);
+    if (mail) {
+        const [, before, host, rest] = mail;
+        const domain = organizationalDomain(host.toLowerCase());
+        const sub = host.slice(0, Math.max(0, host.length - domain.length));
+        return (
+            <code className="small url-text">
+                <span className="url-dim">
+                    {before}
+                    {sub}
+                </span>
+                <mark className="url-domain">{host.slice(sub.length)}</mark>
+                <span className="url-dim">{rest}</span>
+            </code>
+        );
+    }
     const m = /^([a-z][\w+.-]*:\/\/)([^/?#]*)(.*)$/is.exec(url);
     if (!m) return <code className="small">{url}</code>;
     const [, scheme, authority, rest] = m;

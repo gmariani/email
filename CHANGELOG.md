@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [20261112]
 ### Added
 - Links wrapped by Adobe click tracking (`adobe.com/api/mailings/click/…`) show where they really go.
+- Links: email (`mailto:`) and phone (`tel:`) links are listed too, with the email's domain highlighted and checkable. A `mailto:` whose text shows a different address than it writes to is flagged.
 
 ## [20261103]
 ### Added

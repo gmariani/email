@@ -156,9 +156,12 @@ export interface FoundLink {
     /** Where a known redirector (Barracuda, Safe Links, Proofpoint, Google…) sends the click, when the URL is one. */
     target: string | null;
     targetHost: string | null;
-    /** The visible text names a different site than the link goes to. */
+    /** The visible text names a different site (or, for mailto:, a different address) than the link goes to. */
     mismatch: boolean;
 }
+
+/** Web, mailto: and tel: links; other schemes (javascript:, cid:, #anchors…) aren't places a click takes you. */
+const LINK_SCHEME = /^(https?:\/\/|mailto:|tel:)/i;
 
 /** Links in the HTML and plain-text parts, deduplicated. Visible text that names another domain is flagged. */
 export function findLinks(root: MimePart): FoundLink[] {
@@ -169,7 +172,7 @@ export function findLinks(root: MimePart): FoundLink[] {
             const doc = new DOMParser().parseFromString(part.text, 'text/html');
             for (const a of doc.querySelectorAll('a[href]')) {
                 const url = a.getAttribute('href')?.trim() ?? '';
-                if (!/^https?:\/\//i.test(url)) continue;
+                if (!LINK_SCHEME.test(url)) continue;
                 const text = (a.textContent ?? '').replace(/\s+/g, ' ').trim() || null;
                 const host = hostOf(url);
                 const target = unwrapLink(url);
@@ -177,12 +180,17 @@ export function findLinks(root: MimePart): FoundLink[] {
                 const lands = targetHost ?? host;
                 const shown = text ? hostOf(text.startsWith('http') ? text : `https://${text}`) : null;
                 const looksLikeUrl = !!text && /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(text);
-                const mismatch = looksLikeUrl && !!shown && !!lands && shown !== lands && !lands.endsWith(`.${shown}`);
+                // "support@bank.com" as the text of a mailto: to someone else
+                const shownAddress = text && /^[^\s@]+@[\w-]+(\.[\w-]+)+$/.test(text) ? text.toLowerCase() : null;
+                const mailsTo = mailtoAddress(target ?? url);
+                const mismatch =
+                    (looksLikeUrl && !!shown && !!lands && shown !== lands && !lands.endsWith(`.${shown}`)) ||
+                    (!!shownAddress && /^mailto:/i.test(target ?? url) && shownAddress !== mailsTo);
                 const key = `${url}\n${text}`;
                 if (!links.has(key)) links.set(key, { url, host, text, target, targetHost, mismatch });
             }
         } else {
-            for (const m of part.text.matchAll(/\bhttps?:\/\/[^\s<>"')\]]+/gi)) {
+            for (const m of part.text.matchAll(/\b(?:https?:\/\/|mailto:)[^\s<>"')\]]+/gi)) {
                 const url = m[0].replace(/[.,;:!?]+$/, '');
                 if ([...links.values()].some((l) => l.url === url)) continue;
                 const target = unwrapLink(url);
@@ -283,7 +291,25 @@ function decodeBase32(text: string): Uint8Array | null {
     return new Uint8Array(out);
 }
 
+/** The first address in a mailto: link, lower-cased. Null when there isn't one. */
+function mailtoAddress(url: string): string | null {
+    let address = url.replace(/^mailto:/i, '').split(/[?,]/)[0];
+    try {
+        address = decodeURIComponent(address);
+    } catch {
+        // keep it as written
+    }
+    address = address.trim().toLowerCase();
+    return address.lastIndexOf('@') > 0 ? address : null;
+}
+
 function hostOf(url: string): string | null {
+    // mailto: goes to the domain of the (first) address; tel: goes nowhere on the web
+    if (/^mailto:/i.test(url)) {
+        const address = mailtoAddress(url);
+        return address ? address.slice(address.lastIndexOf('@') + 1).replace(/\.$/, '') || null : null;
+    }
+    if (/^tel:/i.test(url)) return null;
     try {
         return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
     } catch {
