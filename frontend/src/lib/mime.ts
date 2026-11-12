@@ -243,11 +243,44 @@ function unwrapOnce(url: string): string | null {
             }
         }
     }
+    // Adobe click tracking: https://….adobe.com/api/mailings/click/<base32 JSON with a "url" field>
+    if (parsed.hostname === 'adobe.com' || parsed.hostname.endsWith('.adobe.com')) {
+        const token = /\/mailings\/click\/([A-Z2-7]+=*)/i.exec(parsed.pathname)?.[1];
+        const bytes = token ? decodeBase32(token) : null;
+        if (bytes) {
+            try {
+                const target = JSON.parse(new TextDecoder().decode(bytes))?.url;
+                // Whatever was clicked: web pages, but also mailto: and tel: links
+                if (typeof target === 'string' && /^(https?:\/\/[^/\s]|mailto:|tel:)/i.test(target)) return target;
+            } catch {
+                return null;
+            }
+        }
+    }
     for (const name of TARGET_PARAMS) {
         const value = parsed.searchParams.get(name)?.trim();
         if (value && /^https?:\/\/[^/\s]/i.test(value)) return value;
     }
     return null;
+}
+
+/** RFC 4648 base32 (A–Z, 2–7), padding optional. Null on a bad character. */
+function decodeBase32(text: string): Uint8Array | null {
+    const clean = text.toUpperCase().replace(/=+$/, '');
+    const out: number[] = [];
+    let bits = 0;
+    let value = 0;
+    for (const char of clean) {
+        const index = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'.indexOf(char);
+        if (index < 0) return null;
+        value = (value << 5) | index;
+        bits += 5;
+        if (bits >= 8) {
+            bits -= 8;
+            out.push((value >>> bits) & 0xff);
+        }
+    }
+    return new Uint8Array(out);
 }
 
 function hostOf(url: string): string | null {
