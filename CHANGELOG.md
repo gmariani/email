@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [20261118]
+### Added
+- turboSMTP (serversmtp.com) is recognised as a sending service: its headers are grouped on the Headers tab, and "Where to report it" points to abuse@serversmtp.com, quoting the account id, relay id and tracking header.
+- Links: turboSMTP click-tracking links (`serversmtpurl.com/tracking-…`) show what their token decodes to (the message id and link id). The destination itself is only on turboSMTP's servers, so it can't be shown.
+
 ## [20261112]
 ### Added
 - Links wrapped by Adobe click tracking (`adobe.com/api/mailings/click/…`) show where they really go.

@@ -158,6 +158,14 @@ export interface FoundLink {
     targetHost: string | null;
     /** The visible text names a different site (or, for mailto:, a different address) than the link goes to. */
     mismatch: boolean;
+    /** A click-tracking link whose destination is kept on the tracker's servers: what its token decodes to. */
+    decoded: DecodedTracking | null;
+}
+
+export interface DecodedTracking {
+    service: string;
+    /** The decoded token, as the tracker wrote it. */
+    text: string;
 }
 
 /** Web, mailto: and tel: links; other schemes (javascript:, cid:, #anchors…) aren't places a click takes you. */
@@ -187,14 +195,14 @@ export function findLinks(root: MimePart): FoundLink[] {
                     (looksLikeUrl && !!shown && !!lands && shown !== lands && !lands.endsWith(`.${shown}`)) ||
                     (!!shownAddress && /^mailto:/i.test(target ?? url) && shownAddress !== mailsTo);
                 const key = `${url}\n${text}`;
-                if (!links.has(key)) links.set(key, { url, host, text, target, targetHost, mismatch });
+                if (!links.has(key)) links.set(key, { url, host, text, target, targetHost, mismatch, decoded: decodeTracking(target ?? url) });
             }
         } else {
             for (const m of part.text.matchAll(/\b(?:https?:\/\/|mailto:)[^\s<>"')\]]+/gi)) {
                 const url = m[0].replace(/[.,;:!?]+$/, '');
                 if ([...links.values()].some((l) => l.url === url)) continue;
                 const target = unwrapLink(url);
-                links.set(url, { url, host: hostOf(url), text: null, target, targetHost: target ? hostOf(target) : null, mismatch: false });
+                links.set(url, { url, host: hostOf(url), text: null, target, targetHost: target ? hostOf(target) : null, mismatch: false, decoded: decodeTracking(target ?? url) });
             }
         }
     }
@@ -270,6 +278,40 @@ function unwrapOnce(url: string): string | null {
         if (value && /^https?:\/\/[^/\s]/i.test(value)) return value;
     }
     return null;
+}
+
+/**
+ * Click-tracking links that carry only ids, not the destination (that stays on
+ * the tracker's servers). Decoding them still shows which message and link
+ * were clicked, for an abuse report. Null when the URL isn't one.
+ */
+export function decodeTracking(url: string): DecodedTracking | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    // turboSMTP: https://serversmtpurl.com/tracking-<x>/<token>, token = ROT13(base64(ROT13("id=<message>&linkid=<link>")))
+    if (parsed.hostname === 'serversmtpurl.com' || parsed.hostname.endsWith('.serversmtpurl.com')) {
+        const token = /^\/tracking-[^/]+\/([A-Za-z0-9+/_-]+=*)/.exec(parsed.pathname)?.[1];
+        if (!token) return null;
+        try {
+            const base64 = rot13(token).replace(/-/g, '+').replace(/_/g, '/');
+            const text = rot13(atob(base64 + '='.repeat((4 - (base64.length % 4)) % 4)));
+            if (/^[\x20-\x7e]+$/.test(text)) return { service: 'turboSMTP', text };
+        } catch {
+            return null;
+        }
+    }
+    return null;
+}
+
+function rot13(text: string): string {
+    return text.replace(/[a-z]/gi, (c) => {
+        const base = c <= 'Z' ? 65 : 97;
+        return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+    });
 }
 
 /** RFC 4648 base32 (A–Z, 2–7), padding optional. Null on a bad character. */

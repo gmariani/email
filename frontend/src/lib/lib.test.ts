@@ -14,7 +14,7 @@ import { decodeSpamcause } from './explain/spam';
 import { decodeThreadIndex } from './explain/standard';
 import { formatInZone, formatUtc } from './format';
 import { NotAnEmailError, splitMessage } from './message';
-import { leafParts, unwrapLink } from './mime';
+import { decodeTracking, leafParts, unwrapLink } from './mime';
 import { msgToEml, type MsgSource } from './outlook';
 import { htmlFromRtf } from './rtf';
 import { parseReceived, securityOf } from './received';
@@ -283,6 +283,28 @@ describe('who sent it and where to report it', () => {
         expect(service.value).toBe('Amazon SES');
         expect(service.details?.map((d) => d.label)).toEqual(['Kind', 'Customer id', 'Other id']);
         expect(report.actual.some((i) => i.label === 'Sending server')).toBe(false);
+    });
+
+    it('sends turboSMTP abuse to serversmtp.com, quoting the account and message ids', () => {
+        const a = analyze(
+            [
+                'Received: from ebifccidgbeb.ams03.turbo-smtp.net (ebifccidgbeb.ams03.turbo-smtp.net [185.228.36.141]) (using TLSv1.2) by mx.example.org (Postfix) with ESMTPS id 79D059B392CB for <you@example.org>; Tue, 17 Nov 2026 15:07:08 -0500 (EST)',
+                'DKIM-Signature: v=1; a=rsa-sha256; d=sender.test; s=turbo-smtp; c=relaxed/relaxed; h=from:to:subject; bh=x; b=x',
+                'X-Account-Id: 23361182',
+                'X-Relay-Id: 2234062577699315712',
+                'X-Message-Id: 2234062577699315712',
+                'Received: from 65.98.127.17 by turbo-smtp.com with SMTP; 17 Nov 2026 20:07:05 -0000',
+                'X-TurboSMTP-Tracking: 64-0164769e-00001f00fc13edc2e000-000-4875f8ad',
+                'From: "Henry" <henry@sender.test>',
+                'To: <you@example.org>',
+                'Subject: Escape the agency trap',
+            ].join('\n'),
+        );
+        const turbo = a.services.find((s) => s.service.name === 'turboSMTP');
+        expect(turbo?.side).toBe('sending');
+        const report = senderReport(a, null);
+        expect(report.targets[0]).toMatchObject({ who: 'turboSMTP', email: 'abuse@serversmtp.com' });
+        expect(report.targets[0].quote.map((q) => q.name)).toEqual(['X-Account-Id', 'X-Relay-Id', 'X-TurboSMTP-Tracking']);
     });
 
     it('reports the sending mailbox provider and the networks, not the recipient\'s own provider', () => {
@@ -705,6 +727,12 @@ describe('link redirects', () => {
         // Adobe around Safe Links
         expect(unwrapLink('https://icx.adobe.com/api/mailings/click/PMRGSZBCHIZTEOBUGY3TIMRMEJ2XE3BCHIRGQ5DUOBZTULZPNZQW2MBUFZZWCZTFNRUW423TFZYHE33UMVRXI2LPNYXG65LUNRXW62ZOMNXW2LZ7OVZGYPLIOR2HA4ZFGNASKMSGEUZEM2LDPAXGCZDPMJSS4Y3PNUSTERTDEUZEMYLLMFXGW43IMFSGCZDPMJSS2Y3PNVOHKMBQGI3GIYLUME6TANJFG5BTAMRFG5BWC23BNZVXG2DBMQSTIMDBMRXWEZJOMNXW2JJXINRTQOJTGIYDEZRRGNQTMNDCGU4DKNRRGQYDQZDGGA4WMMZZMJRGCJJXINTGCN3CGFRDKYJXMIZTINBTHA3TSNDBMVSDEYZRG44GIZLDMVSTCJJXIMYCKN2DGASTOQZWGM4TENBQGYYTIMBWGM2TINJWHA3SKN2DKVXGW3TPO5XCKN2DKRLUM4DCI5NHGYRTMQ4GK6KKIZRFQQRQMVKTC2DDI5VWST3OKJ4WIV2VONEWYWLJJ5UUS52MNJAXKTKEIF3U2Q2JONEWYQLJJ5UUUWDBK42HUTLJJFZUS22GJ5EWU33JKRLUM4DCINEXGSLMMRKUS2TPPFTFCJJTIQSTGRBFG5BTAJJXIMSTOQZFG5BVY5JQGAZDM43EMF2GCPLTNRDFOYTGGZ3HSJJSIJZWM2KUJJLDKVBRPI4EI5TQKVTTQS2UOJKGOZTEEUZEEY2NOESTERRFGJDDOUDTEUZUIXDVGAYDENTSMVZWK4TWMVSD2MBCFQRG64THEI5CEYTDMM4DANDGG4WTCZJUMUWTIYTGG4WWEZBSGUWTCYTGGRQTQOBUMIYDMZJCFQRHMZLSONUW63RCHIRDIIRMEJZWSZZCHIRE44LNOZWTOODPM5WG6MLRGYYU4U2NM52GWTDGKQ3XINS7NZDUM2CTG5CXGSTNINTE6TSNHURH2===')).toBe('https://icx.adobe.com/c/akankshadadobe-com');
         expect(unwrapLink('https://adobe.com.example.com/api/mailings/click/PMRGSZBCHIZTEOBUGY3TIMRMEJ2XE3BCHIRGQ5DUOBZTULZPNFRXQLTBMRXWEZJOMNXW2L3DF5QWWYLONNZWQYLEMFSG6YTFFVRW63JCFQRG64THEI5CEYTDMM4DANDGG4WTCZJUMUWTIYTGG4WWEZBSGUWTCYTGGRQTQOBUMIYDMZJCFQRHMZLSONUW63RCHIRDIIRMEJZWSZZCHIRFUQLIJJ2FO2LTGUZVCTJNMN4UYZ2LI5QXAT3XNV4VUNRNGVLXG4CBOVDGE2JQIVVDMX2JHURH2===')).toBeNull();
+        // turboSMTP keeps the destination server-side: the token only decodes to ids
+        expect(unwrapLink('https://serversmtpurl.com/tracking-dkhzA/qaR9ZwVmAQN2ZwH3AmL5BGZkAGpkZvM5qzS4qaR9ZQbjDt')).toBeNull();
+        expect(decodeTracking('https://serversmtpurl.com/tracking-dkhzA/qaR9ZwVmAQN2ZwH3AmL5BGZkAGpkZvM5qzS4qaR9ZQbjDt')).toEqual({ service: 'turboSMTP', text: 'id=2234062577699315712&linkid=0:0O' });
+        expect(decodeTracking('https://serversmtpurl.com/tracking-dkhzA/qaR9ZwVmAQN3ZmLmBGDmZmplZmxjAPM5qzS4qaR9ZQbkJt')).toEqual({ service: 'turboSMTP', text: 'id=2234073639433723904&linkid=0:1M' });
+        expect(decodeTracking('https://serversmtpurl.com.example.com/tracking-dkhzA/qaR9ZwVmAQN2ZwH3AmL5BGZkAGpkZvM5qzS4qaR9ZQbjDt')).toBeNull();
+        expect(decodeTracking('https://example.com/')).toBeNull();
         // Only Amazon's own domain gets this reading
         expect(unwrapLink('https://awstrack.me.example.com/L0/https:%2F%2Fexample.org%2F/2/x/y')).toBeNull();
         // Safe Links around Proofpoint

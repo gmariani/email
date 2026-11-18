@@ -97,6 +97,16 @@ export function ContentTab({ analysis, onOpenAttached }: { analysis: Analysis; o
                                                     <LinkTarget url={link.target} host={link.targetHost} />
                                                 </div>
                                             )}
+                                            {link.decoded && (
+                                                <div className="link-forward mt-2">
+                                                    <div className="small text-body-secondary">
+                                                        <i className="bi bi-unlock me-1" />
+                                                        {link.decoded.service} click tracking decodes to
+                                                    </div>
+                                                    <code className="text-break">{link.decoded.text}</code>
+                                                    <div className="small text-body-secondary">Only ids: where it goes is kept on {link.decoded.service}'s servers. Quote it in an abuse report.</div>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="text-break">
                                             {link.text ?? <Muted>(plain-text link)</Muted>}

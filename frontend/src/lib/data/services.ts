@@ -94,6 +94,19 @@ export const SERVICES: Service[] = [
         account: ['x-msfbl'],
     },
     {
+        name: 'turboSMTP',
+        kind: 'Email sending service',
+        about: "turboSMTP (serversmtp.com, Edisplay srl, Italy), an SMTP relay and email API. Customers sign with their own domain under the selector \"turbo-smtp\". X-Relay-Id is turboSMTP's id for this message (its serversmtpurl.com click-tracking links carry the same id) and X-Account-Id the customer account.",
+        url: 'https://serversmtp.com/',
+        headers: /^x-turbosmtp-/,
+        // Generic names other senders use too: grouped here only once turboSMTP is found another way.
+        relatedHeaders: /^(x-relay-id|x-message-id|x-account-id|x-tenant-id|x-campaign-id|x-provider|x-provider-domain)$/,
+        hosts: ['turbo-smtp.net', 'turbo-smtp.com', 'serversmtp.com'],
+        // Policy: https://serversmtp.com/anti-spam-policy/ (no report form; email only)
+        abuse: { email: 'abuse@serversmtp.com' },
+        account: ['x-account-id', 'x-relay-id', 'x-turbosmtp-tracking'],
+    },
+    {
         name: 'Mailchimp',
         kind: 'Marketing platform',
         about: 'Mailchimp (Intuit) newsletters and marketing email.',
