@@ -720,6 +720,13 @@ describe('link redirects', () => {
         expect(unwrapLink('https://urldefense.proofpoint.com/v2/url?u=https-3A__example.com_path-3Fa-3D1&d=DwMF&c=x')).toBe('https://example.com/path?a=1');
         expect(unwrapLink('https://urldefense.com/v3/__https://example.com/login__;!!ABC123$')).toBe('https://example.com/login');
         expect(unwrapLink('https://www.google.com/url?q=https://example.org/&sa=D')).toBe('https://example.org/');
+        // Base64 destinations (home-made trackers)
+        expect(unwrapLink('https://tjsfqfkheqlibflhwyhy.supabase.co/functions/v1/track/click?s=818f0878-acde-4475-8412-ad0097eea25d&u=aHR0cHM6Ly9zYS1jeWJlci5jb20')).toBe('https://sa-cyber.com');
+        expect(unwrapLink('https://tjsfqfkheqlibflhwyhy.supabase.co/functions/v1/track/click?s=818f0878-acde-4475-8412-ad0097eea25d&u=aHR0cHM6Ly9zb3NhYXJ2ZWxvLmNvbQ')).toBe('https://sosaarvelo.com');
+        expect(unwrapLink('https://track.example.com/c?url=aHR0cHM6Ly9leGFtcGxlLm9yZy9hP2I9MQ==')).toBe('https://example.org/a?b=1');
+        // Base64 that isn't a web address is left alone
+        expect(unwrapLink('https://track.example.com/c?u=aGVsbG8gd29ybGQ')).toBeNull();
+        expect(unwrapLink('https://track.example.com/c?u=12345678')).toBeNull();
         expect(unwrapLink('https://vwbrw9dy.r.us-east-1.awstrack.me/L0/https:%2F%2Fawsworkshop.io%2Feks%2Fsaas%3Ftrk=ac0635b0-d034-40d7-bb5a-68e7d8058160%26sc_channel=el/2/010001a1a2706a15-a964f547-9239-4d3f-ab3b-09f8def0cb78-000000/yQI88k2cji1KlOVOF3o9HGa4Ahg=473')).toBe('https://awsworkshop.io/eks/saas?trk=ac0635b0-d034-40d7-bb5a-68e7d8058160&sc_channel=el');
         expect(unwrapLink('https://icx.adobe.com/api/mailings/click/PMRGSZBCHIZTEOBUGY3TIMRMEJ2XE3BCHIRGQ5DUOBZTULZPNFRXQLTBMRXWEZJOMNXW2L3DF5QWWYLONNZWQYLEMFSG6YTFFVRW63JCFQRG64THEI5CEYTDMM4DANDGG4WTCZJUMUWTIYTGG4WWEZBSGUWTCYTGGRQTQOBUMIYDMZJCFQRHMZLSONUW63RCHIRDIIRMEJZWSZZCHIRFUQLIJJ2FO2LTGUZVCTJNMN4UYZ2LI5QXAT3XNV4VUNRNGVLXG4CBOVDGE2JQIVVDMX2JHURH2===')).toBe('https://icx.adobe.com/c/akankshadadobe-com');
         expect(unwrapLink('https://icx.adobe.com/api/mailings/click/PMRGSZBCHIZTEOBUGY3TIMRMEJ2XE3BCHIRHIZLMHIUDIMBYFESTEMBWG42S2MZSGAZCELBCN5ZGOIR2EJRGGYZYGA2GMNZNGFSTIZJNGRRGMNZNMJSDENJNGFRGMNDBHA4DIYRQGZSSELBCOZSXE43JN5XCEORCGQRCYITTNFTSEORCOVVVESLMIE2U4RCMK53GW53ZL55HOULHN5TTI2DYOVWWO2DUNY2VMODDNNTGUOD2M5MWGPJCPU======')).toBe('tel:(408)%20675-3202');

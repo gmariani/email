@@ -277,7 +277,27 @@ function unwrapOnce(url: string): string | null {
         const value = parsed.searchParams.get(name)?.trim();
         if (value && /^https?:\/\/[^/\s]/i.test(value)) return value;
     }
+    // Home-made trackers (e.g. …supabase.co/functions/v1/track/click?u=aHR0cHM6Ly9…) put the address in base64
+    for (const name of TARGET_PARAMS) {
+        const value = parsed.searchParams.get(name)?.trim();
+        const decoded = value ? decodeBase64Text(value) : null;
+        if (decoded && /^https?:\/\/[^/\s]+\S*$/i.test(decoded)) return decoded;
+    }
     return null;
+}
+
+/** Standard or URL-safe base64, padding optional, as text. Null when it isn't base64 or isn't printable. */
+function decodeBase64Text(value: string): string | null {
+    // searchParams turns an unescaped "+" into a space
+    const clean = value.replace(/ /g, '+').replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '');
+    if (!/^[A-Za-z0-9+/]+$/.test(clean) || clean.length % 4 === 1) return null;
+    try {
+        const bytes = Uint8Array.from(atob(clean + '='.repeat((4 - (clean.length % 4)) % 4)), (c) => c.charCodeAt(0));
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        return /^[^\x00-\x1f\x7f]+$/.test(text) ? text : null;
+    } catch {
+        return null;
+    }
 }
 
 /**
